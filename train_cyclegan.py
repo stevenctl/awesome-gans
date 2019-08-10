@@ -58,12 +58,12 @@ for epoch in range(EPOCHS):
     for x, y in tf.data.Dataset.zip((train_x, train_y)):
         model.train_step(x, y)
         if n % 10 == 0:
-            print(".")
+            print(".", end="")
         n += 1
 
     out = ""
     if (epoch + 1) % 5 == 0:
-        print(checkpoint_manager.save() + " ")
+        print(checkpoint_manager.save(), end=" ")
         check_progress()
 
     print(out + str(time.time() - start))

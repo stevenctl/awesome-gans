@@ -10,7 +10,7 @@ class CheckpointManager:
         self._manager = tf.train.CheckpointManager(self._checkpoint, path, max_to_keep)
 
     def save(self) -> str:
-        self._manager.save()
+        return self._manager.save()
 
     def list(self) -> list:
         return self._manager.checkpoints
