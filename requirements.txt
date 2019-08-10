@@ -1,0 +1,14 @@
+matplotlib==2.2.4
+numpy==1.16.4
+pathlib==1.0.1
+tensorboard==1.14.0
+tensorflow==2.0.0b1
+tensorflow-estimator==1.14.0
+tensorflow-examples===8fef274721e6537c1b142f96a9b57b38792f98e2-
+termcolor==1.1.0
+tf==1.0.0
+tf-estimator-nightly==1.14.0.dev2019060501
+traitlets==4.3.2
+wcwidth==0.1.7
+Werkzeug==0.15.5
+wrapt==1.11.2
