@@ -6,7 +6,7 @@ import tensorflow as tf
 class CheckpointManager:
 
     def __init__(self, model: Model, path: str, max_to_keep: int = 5):
-        self._checkpoint = tf.train.Checkpoint(**model.model_vars)
+        self._checkpoint = tf.train.Checkpoint(**model.get_vars())
         self._manager = tf.train.CheckpointManager(self._checkpoint, path, max_to_keep)
 
     def save(self) -> str:

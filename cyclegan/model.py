@@ -1,9 +1,9 @@
 import tensorflow as tf
-from util import Model
 from tensorflow_examples.models.pix2pix import pix2pix
-import matplotlib.pyplot as plt
 
-NORM_TYPE = 'instancenorm'
+from util import Model
+
+NORM_TYPE = "instancenorm"
 OUTPUT_CHANNELS = 3
 
 # LAMBDA scales the magnitude of identity and cycle losses
@@ -12,54 +12,57 @@ loss_func = tf.keras.losses.BinaryCrossentropy(from_logits=True)
 
 
 class CycleGAN(Model):
-
-    def build_model(self):
+    def __init__(self):
         build_discriminator = lambda: pix2pix.discriminator(norm_type=NORM_TYPE, target=False)
         build_optimizer = lambda: tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
         build_generator = lambda: pix2pix.unet_generator(OUTPUT_CHANNELS, norm_type=NORM_TYPE)
-        return {
-            # Discriminators (Tries to identify if the input is a real example of its class)
-            'Dx ': build_discriminator(), 'Dy ': build_discriminator(),
-            # Generators (Converts from the opposite class into the new class)
-            'Gx ': build_generator(), 'Gy ': build_generator(),
-            # Optimizers to perform stochastic graident descent
-            'Dx_optimizer ': build_optimizer(), 'Dy_optimizer': build_optimizer(),
-            'Gx_optimizer ': build_optimizer(), 'Gy_optimizer ': build_optimizer(),
-        }
+
+        # Discriminators (Tries to identify if the input is a real example of its class)
+        self.Dx = build_discriminator()
+        self.Dy = build_discriminator()
+        # Generators (Converts from the opposite class into the new class)
+        self.Gx = build_generator()
+        self.Gy = build_generator()
+        # Optimizers to perform stochastic graident descent
+        self.Dx_optimizer = build_optimizer()
+        self.Dy_optimizer = build_optimizer()
+        self.Gx_optimizer = build_optimizer()
+        self.Gy_optimizer = build_optimizer()
 
     def generate_x(self, image):
-        return self.model_vars['Gx'](image)
+        return self.Gx(image)
 
     def generate_y(self, image):
-        return self.model_vars['Gx'](image)
+        return self.Gy(image)
+
+    def get_vars(self):
+        return dict(
+            Dx=self.Dx, Dy=self.Dy, Gx=self.Gx, Gy=self.Gy,
+            Dx_optimizer=self.Dx_optimizer, Dy_optimizer=self.Dy_optimizer,
+            Gx_optimizer=self.Gx_optimizer, Gy_optimizer=self.Gy_optimizer,
+        )
 
     @tf.function
-    def train_step(self, *inputs):
-        real_x, real_y = inputs
-        Gx, Gy, Dx, Dy = [self.model_vars[n] for n in ['Gx', 'Gy', 'Dx', 'Dy']]
-        Gx_optimizer, Gy_optimizer, Dx_optimizer, Dy_optimizer = [
-            self.model_vars[n + '_optimizer']
-            for n in ['Gx', 'Gy', 'Dx', 'Dy']
-        ]
+    def train_step(self, real_x, real_y):
         with tf.GradientTape(persistent=True) as tape:
             """FORWARD PASS - Generate images and discriminate"""
             # Generate fake y and try to recover the original x
-            fake_y = Gy(real_x, training=True)
-            cycle_x = Gx(fake_y, training=True)
+            fake_y = self.Gy(real_x, training=True)
+            cycle_x = self.Gx(fake_y, training=True)
 
             # Generate fake X and try to recover the original y
-            fake_x = Gy(real_y, training=True)
-            cycle_y = Gx(fake_x, training=True)
+            fake_x = self.Gy(real_y, training=True)
+            cycle_y = self.Gx(fake_x, training=True)
 
             # Try to generate an identical image from an image
-            identity_x = Gx(real_x, training=True)
-            identity_y = Gy(real_y, training=True)
+            identity_x = self.Gx(real_x, training=True)
+            identity_y = self.Gy(real_y, training=True)
 
-            disc_real_x = Dx(real_x, training=True)
-            disc_fake_x = Dx(fake_x, training=True)
+            disc_real_x = self.Dx(real_x, training=True)
+            disc_fake_x = self.Dx(fake_x, training=True)
 
-            disc_real_y = Dy(real_y, training=True)
-            disc_fake_y = Dy(fake_y, training=True)
+            disc_real_y = self.Dy(real_y, training=True)
+            disc_fake_y = self.Dy(fake_y, training=True)
 
             """CALCULATE LOSSES"""
             # how well generators tricked discriminators
@@ -75,17 +78,17 @@ class CycleGAN(Model):
             Dx_loss = d_loss(disc_real_x, disc_fake_x)
             Dy_loss = d_loss(disc_real_y, disc_fake_y)
 
-        # Calculate the gradients for generator and discriminator
-        Gx_grad = tape.gradient(total_Gx_loss, Gx.trainable_variables)
-        Gy_grad = tape.gradient(total_Gy_loss, Gy.trainable_variables)
-        Dx_grad = tape.gradient(Dx_loss, Dx.trainable_variables)
-        Dy_grad = tape.gradient(Dy_loss, Dy.trainable_variables)
+            # Calculate the gradients for generator and discriminator
+        Gx_grad = tape.gradient(total_Gx_loss, self.Gx.trainable_variables)
+        Gy_grad = tape.gradient(total_Gy_loss, self.Gy.trainable_variables)
+        Dx_grad = tape.gradient(Dx_loss, self.Dx.trainable_variables)
+        Dy_grad = tape.gradient(Dy_loss, self.Dy.trainable_variables)
 
-        Gx_optimizer.apply_gradients(zip(Gx_grad, Gx.trainable_variables))
-        Gy_optimizer.apply_gradients(zip(Gy_grad, Gy.trainable_variables))
+        self.Gx_optimizer.apply_gradients(zip(Gx_grad, self.Gx.trainable_variables))
+        self.Gy_optimizer.apply_gradients(zip(Gy_grad, self.Gy.trainable_variables))
 
-        Dx_optimizer.apply_gradients(zip(Dx_grad, Dx.trainable_variables))
-        Dy_optimizer.apply_gradients(zip(Dy_grad, Dy.trainable_variables))
+        self.Dx_optimizer.apply_gradients(zip(Dx_grad, self.Dx.trainable_variables))
+        self.Dy_optimizer.apply_gradients(zip(Dy_grad, self.Dy.trainable_variables))
 
 
 def d_loss(real, fake):
