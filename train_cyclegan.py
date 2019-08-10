@@ -49,21 +49,22 @@ def check_progress():
         plt.show()
 
 
-EPOCHS = 40
-for epoch in range(EPOCHS):
+def train():
+    EPOCHS = 40
+    for epoch in range(EPOCHS):
 
-    start = time.time()
+        start = time.time()
 
-    n = 0
-    for x, y in tf.data.Dataset.zip((train_x, train_y)):
-        model.train_step(x, y)
-        if n % 10 == 0:
-            print(".", end="")
-        n += 1
+        n = 0
+        for x, y in tf.data.Dataset.zip((train_x, train_y)):
+            model.train_step(x, y)
+            if n % 10 == 0:
+                print(".", end="")
+            n += 1
 
-    out = ""
-    if (epoch + 1) % 5 == 0:
-        print(checkpoint_manager.save(), end=" ")
-        check_progress()
+        out = ""
+        if (epoch + 1) % 5 == 0:
+            print(checkpoint_manager.save(), end=" ")
+            check_progress()
 
-    print(out + str(time.time() - start))
+        print(out + str(time.time() - start))
