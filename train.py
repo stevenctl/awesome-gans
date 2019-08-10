@@ -2,12 +2,12 @@ import time
 import tensorflow as tf
 
 # get a checkpoint manager and models potentially loaded with the latest checkpoint
-from checkpoint import checkpoint_manager, \
+from cyclegan.checkpoint import checkpoint_manager, \
     Gx, Gy, Gx_optimizer, Gy_optimizer, \
     Dx, Dy, Dx_optimizer, Dy_optimizer
 
 # get our loss functions for the model
-from model import translate_image, g_loss, d_loss, identity_loss, cycle_loss
+from cyclegan.model import translate_image, g_loss, d_loss, identity_loss, cycle_loss
 @tf.function
 def train_step(real_x, real_y):
     with tf.GradientTape(persistent=True) as tape:
@@ -38,8 +38,8 @@ def train_step(real_x, real_y):
         # how well images were able to be recovered by their own category generator
         total_cycle_loss = cycle_loss(real_x, cycle_x) + cycle_loss(real_y, cycle_y)
 
-        total_Gx_loss = Gx_loss + total_cycle_loss + identity_loss(disc_real_x, disc_fake_x)
-        total_Gy_loss = Gy_loss + total_cycle_loss + identity_loss(disc_real_y, disc_fake_y)
+        total_Gx_loss = Gx_loss + total_cycle_loss + identity_loss(real_x, identity_x)
+        total_Gy_loss = Gy_loss + total_cycle_loss + identity_loss(real_x, identity_x)
 
         Dx_loss = d_loss(disc_real_x, disc_fake_x)
         Dy_loss = d_loss(disc_real_y, disc_fake_y)
@@ -58,7 +58,7 @@ def train_step(real_x, real_y):
 
 EPOCHS = 40
 for epoch in range(EPOCHS):
-    from data import train_x, test_x, train_y, test_y
+    from cyclegan.data import train_x, train_y
 
     sample_x = next(iter(train_x))
     sample_y = next(iter(train_y))
@@ -69,12 +69,12 @@ for epoch in range(EPOCHS):
     for x, y in tf.data.Dataset.zip((train_x, train_y)):
         train_step(x, y)
         if n % 10 == 0:
-            print(".", end="")
+            print(".")
         n += 1
 
     out = ""
     if (epoch + 1) % 5 == 0:
-        print(checkpoint_manager.save() + " ", end="")
+        print(checkpoint_manager.save() + " ")
         translate_image(Gx, sample_y)
         translate_image(Gy, sample_x)
 
