@@ -1,29 +1,13 @@
 import time
-
 import tensorflow as tf
-from model import generate_images, \
-    g_loss, d_loss, loss_func, identity_loss, cycle_loss, \
+
+# get a checkpoint manager and models potentially loaded with the latest checkpoint
+from checkpoint import checkpoint_manager, \
     Gx, Gy, Gx_optimizer, Gy_optimizer, \
     Dx, Dy, Dx_optimizer, Dy_optimizer
 
-# Checkpoint all our models
-checkpoint = tf.train.Checkpoint(
-    Gx=Gx, Gy=Gy, Dx=Dx, Dy=Dy,
-    Gx_optimizer=Gx_optimizer, Gy_optimizer=Gy_optimizer,
-    Dx_optimizer=Dx_optimizer, Dy_optimizer=Dy_optimizer,
-)
-
-checkpoint_path = './checkpoints/train'
-checkpoint_manager = tf.train.CheckpointManager(checkpoint, checkpoint_path, max_to_keep=5)
-
-# if a checkpoint exists, restore the latest checkpoint.
-if checkpoint_manager.latest_checkpoint:
-    checkpoint.restore(checkpoint_manager.latest_checkpoint)
-    print ('Latest checkpoint restored!!')
-
-EPOCHS = 40
-
-
+# get our loss functions for the model
+from model import translate_image, g_loss, d_loss, identity_loss, cycle_loss
 @tf.function
 def train_step(real_x, real_y):
     with tf.GradientTape(persistent=True) as tape:
@@ -72,12 +56,12 @@ def train_step(real_x, real_y):
     Dx_optimizer.apply_gradients(zip(Dx_grad, Dx.trainable_variables))
     Dy_optimizer.apply_gradients(zip(Dy_grad, Dy.trainable_variables))
 
-
+EPOCHS = 40
 for epoch in range(EPOCHS):
     from data import train_x, test_x, train_y, test_y
 
-    sample_x=next(iter(train_x))
-    sample_y=next(iter(train_y))
+    sample_x = next(iter(train_x))
+    sample_y = next(iter(train_y))
 
     start = time.time()
 
@@ -91,7 +75,7 @@ for epoch in range(EPOCHS):
     out = ""
     if (epoch + 1) % 5 == 0:
         print(checkpoint_manager.save() + " ", end="")
-        generate_images(Gx, sample_y)
-        generate_images(Gy, sample_x)
+        translate_image(Gx, sample_y)
+        translate_image(Gy, sample_x)
 
     print(out + str(time.time() - start))

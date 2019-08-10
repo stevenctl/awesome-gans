@@ -43,7 +43,7 @@ def cycle_loss(real_image, cycled_image):
     return LAMBDA * tf.reduce_mean(tf.abs(real_image - cycled_image))
 
 
-def generate_images(model, test_input):
+def translate_image(model, test_input):
     prediction = model(test_input)
 
     plt.figure(figsize=(12, 12))
