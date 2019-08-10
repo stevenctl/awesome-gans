@@ -76,17 +76,22 @@ def train_step(real_x, real_y):
 for epoch in range(EPOCHS):
     from data import train_x, test_x, train_y, test_y
 
+    sample_x=next(iter(train_x))
+    sample_y=next(iter(train_y))
+
     start = time.time()
 
     n = 0
     for x, y in tf.data.Dataset.zip((train_x, train_y)):
         train_step(x, y)
         if n % 10 == 0:
-            print(".",)
+            print(".", end="")
         n += 1
 
     out = ""
     if (epoch + 1) % 5 == 0:
-        out += checkpoint_manager.save() + " "
+        print(checkpoint_manager.save() + " ", end="")
+        generate_images(Gx, sample_y)
+        generate_images(Gy, sample_x)
 
     print(out + str(time.time() - start))
