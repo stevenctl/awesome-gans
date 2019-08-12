@@ -1,7 +1,7 @@
 tensorflow
-matplotlib==2.2.4
-numpy==1.16.4
-pathlib==1.0.1
+matplotlib
+numpy
+pathlib
 tensorboard==1.14.0
 tensorflow-estimator==1.14.0
 termcolor==1.1.0
@@ -9,3 +9,4 @@ traitlets==4.3.2
 wcwidth==0.1.7
 Werkzeug==0.15.5
 wrapt==1.11.2
+pillow
